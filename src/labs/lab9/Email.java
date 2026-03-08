@@ -4,9 +4,23 @@ public class Email implements Comparable<Email>
 {
 	String sender;
 	String recipient;
-	Integer priority; //overload compareTo for arraylist to be able to sort emails
+	String priority; //overload compareTo for arraylist to be able to sort emails
 	String subject;
 	String contents;
+	
+	public Email(String se, String r, String p, String su, String c)
+	{
+		sender = se;
+		recipient = r;
+		priority = p;
+		subject = su;
+		contents = c;
+	}
+
+	public String getContents()
+	{
+		return(contents);
+	}
 	
 	@Override
 	public int compareTo(Email other) {

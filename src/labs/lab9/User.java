@@ -11,10 +11,18 @@ public class User
 	{
 		this.name = name;
 	}
-	
-	
-	//for using Users in a list, we need to ensure that uniqueness can be verified 
-	
+
+    public String getName()
+    {
+        return this.name; 
+    }
+
+    public void addEmail(Email e)
+    {
+        emails.add(e);
+    }
+
+	// for using Users in a list, we need to ensure that uniqueness can be verified
 	@Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -23,9 +31,14 @@ public class User
         return Objects.equals(name, user.name);
     }
 
-	//needed? 
     @Override
     public int hashCode() {
         return Objects.hash(name);
+    }
+
+    @Override
+    public String toString()
+    {
+        return this.name; 
     }
 }
