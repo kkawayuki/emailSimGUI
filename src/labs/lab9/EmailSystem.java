@@ -13,8 +13,12 @@ public class EmailSystem {
 	static User currentUser = new User(determineUser());
 
 	static JFrame homeFrame = new JFrame();
-	static ButtonGroup priorityGroup = new ButtonGroup();
+
+	//user display
+	static JPanel currentUserPanel = new JPanel();
 	static JLabel currentUserDisplay = new JLabel();
+	
+	static ButtonGroup priorityGroup = new ButtonGroup();
 	static JComboBox<String> currentRecipients = new JComboBox<>();
 
 	//inbox
@@ -34,32 +38,47 @@ public class EmailSystem {
 		users.add(new User("Robert Navarro"));
 		System.out.println("Begin program as: " + currentUser);
 
-		// menu bar (for home window)
+		//formatting, menu bar, user indicator, main for program control
+		setHomeFramePreferences();
+		setHomeMenuBar();
+		updateUserIndicator();
+		createMain();
+		publishHomeFrame();
+	}
+
+	public static void setHomeFramePreferences()
+	{
+		homeFrame.setLayout(new BorderLayout());
+		homeFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		homeFrame.setSize(600, 800);
+	}
+
+	public static void setHomeMenuBar()
+	{
 		JMenuBar homeMenu = new JMenuBar();
 		createFileMenu(homeMenu);
 		createUserMenu(homeMenu);
+		homeFrame.setJMenuBar(homeMenu);
+	}
 
-		homeFrame.setLayout(new BorderLayout());
-
-		// user indicator
-		updateUserIndicator();
-
-		//main area of program formatting
+	public static void createMain() {
 		JPanel mainContent = new JPanel();
 		mainContent.setLayout(new BoxLayout(mainContent, BoxLayout.Y_AXIS));
-		mainContent.add(Box.createVerticalStrut(25)); // 25px spacing top
-		createTopPanel(mainContent);
-		mainContent.add(Box.createVerticalStrut(25)); // 25px spacing between
-
-		createBottomPanel(mainContent);
 		previewEmail.setEditable(false);
-		mainContent.add(Box.createVerticalStrut(25)); // 25px spacing under
-		homeFrame.add(mainContent, BorderLayout.CENTER);
 
-		// homeframe preferences
-		homeFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		homeFrame.setJMenuBar(homeMenu);
-		homeFrame.setSize(1200, 800);
+		createTopPanel(mainContent);
+
+		mainContent.add(Box.createVerticalStrut(25)); // 25px spacing between
+		createBottomPanel(mainContent);
+		mainContent.add(Box.createVerticalStrut(25)); // 25px spacing under
+
+		homeFrame.add(mainContent, BorderLayout.CENTER);
+	}
+
+	public static void publishHomeFrame()
+	{
+		homeFrame.pack();
+		homeFrame.setLocationRelativeTo(null);
 		homeFrame.setVisible(true);
 	}
 	
@@ -83,7 +102,10 @@ public class EmailSystem {
 	public static void updateUserIndicator() 
 	{
 		currentUserDisplay.setText("Current User: " + currentUser);
-		homeFrame.add(currentUserDisplay, BorderLayout.NORTH);
+		currentUserPanel.setLayout(new GridBagLayout());
+		currentUserPanel.add(currentUserDisplay);
+		currentUserPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));	//add margins 
+		homeFrame.add(currentUserPanel, BorderLayout.NORTH);
 	}
 	
 	public static void createFileMenu(JMenuBar menu)
@@ -124,7 +146,8 @@ public class EmailSystem {
 
 	public static void createTopPanel(JPanel main)
 	{
-		JPanel inboxPanel = new JPanel(new GridLayout(1, 2, 10, 10));
+		JPanel inboxPanel = new JPanel(new GridLayout(1, 2));	//horizontal, vertical gap
+		inboxPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 0, 20)); // add margins
 		inboxPanel.setBorder(new TitledBorder(new EtchedBorder(),"Inbox"));
 
 		//inbox operations
@@ -157,6 +180,7 @@ public class EmailSystem {
 	{
 		//panel+formatting for bottom
 		JPanel newMsgPanel = new JPanel();
+		newMsgPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 0, 20)); // add margins
 		newMsgPanel.setBorder(new TitledBorder(new EtchedBorder(),"New Message"));
 		BoxLayout yAxisBox = new BoxLayout(newMsgPanel, BoxLayout.Y_AXIS);
 		newMsgPanel.setLayout(yAxisBox);
@@ -182,11 +206,10 @@ public class EmailSystem {
 		
 		//submission buttons
 		JPanel controlButtonsPanel = new JPanel();
-		JButton clearButton = new JButton("Clear");
 		JButton sendButton = new JButton("Send");
-		controlButtonsPanel.add(clearButton);
+		JButton clearButton = new JButton("Clear");
 		controlButtonsPanel.add(sendButton);
-		
+		controlButtonsPanel.add(clearButton);
 		
 		//add all to panel -> homeFrame
 		newMsgPanel.add(currentRecipients);
@@ -195,7 +218,7 @@ public class EmailSystem {
 		newMsgPanel.add(messageScrollable);
 		newMsgPanel.add(controlButtonsPanel);
 		
-		//logic
+		//clearing fields logic
 		clearButton.addActionListener(e ->
 		{
 			messageDraft.setText("");
@@ -203,9 +226,9 @@ public class EmailSystem {
 			priorityGroup.clearSelection();
 		});
 		
+		//sending email logic
 		sendButton.addActionListener(e ->
 		{
-			//don't need to check validity
 			String recipientName = (String) currentRecipients.getSelectedItem();
 			Email currentEmail = new Email(currentUser.getName(), recipientName, determineSelectedRadio(), subjectField.getText(), messageDraft.getText());
 
