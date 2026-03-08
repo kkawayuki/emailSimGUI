@@ -5,9 +5,9 @@ import javax.swing.border.*;
 import java.awt.*;
 import java.util.HashSet;
 import java.util.Set;
+import java.time.LocalTime;
 
 public class EmailSystem {
-	
 	//fields that need to change during runtime cannot be local
 	static Set<User> users = new HashSet<>();
 	static User currentUser = new User(determineUser());
@@ -66,10 +66,10 @@ public class EmailSystem {
 		mainContent.setLayout(new BoxLayout(mainContent, BoxLayout.Y_AXIS));
 		previewEmail.setEditable(false);
 
-		createTopPanel(mainContent);
+		createInboxPanel(mainContent);
 
 		mainContent.add(Box.createVerticalStrut(25)); // 25px spacing between
-		createBottomPanel(mainContent);
+		createNewMsgPanel(mainContent);
 		mainContent.add(Box.createVerticalStrut(25)); // 25px spacing under
 
 		homeFrame.add(mainContent, BorderLayout.CENTER);
@@ -144,15 +144,16 @@ public class EmailSystem {
 		menu.add(userMenu);
 	}
 
-	public static void createTopPanel(JPanel main)
+	public static void createInboxPanel(JPanel main)
 	{
-		JPanel inboxPanel = new JPanel(new GridLayout(1, 2));	//horizontal, vertical gap
+		JPanel inboxPanel = new JPanel(new GridLayout(1, 2, 10, 0));	//horizontal, vertical gap
 		inboxPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 0, 20)); // add margins
 		inboxPanel.setBorder(new TitledBorder(new EtchedBorder(),"Inbox"));
 
 		//inbox operations
 		refreshInbox();
 		JScrollPane listScrollable = new JScrollPane(currentEmailList);
+		inboxPanel.add(listScrollable);
 		
 		//preview area operations
 		currentEmailList.addListSelectionListener(e -> {
@@ -162,10 +163,9 @@ public class EmailSystem {
 			else previewEmail.setText("");
 		});
 		JScrollPane previewScrollable = new JScrollPane(previewEmail);
-		
-		//add scrollable panels and inbox container to homeFrame
-		inboxPanel.add(listScrollable);
 		inboxPanel.add(previewScrollable);
+		
+		//publish changes to main
 		main.add(inboxPanel);
 	}
 
@@ -176,47 +176,52 @@ public class EmailSystem {
 			inboxModel.addElement(e);
 	}
 	
-	public static void createBottomPanel(JPanel main)
+	public static void createNewMsgPanel(JPanel main)
 	{
-		//panel+formatting for bottom
 		JPanel newMsgPanel = new JPanel();
-		newMsgPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 0, 20)); // add margins
-		newMsgPanel.setBorder(new TitledBorder(new EtchedBorder(),"New Message"));
+
+		//panel+formatting for bottom
+		Border margin = BorderFactory.createEmptyBorder(10, 10, 10, 10);
+		Border title = new TitledBorder(new EtchedBorder(), "New Message");
+		newMsgPanel.setBorder(new CompoundBorder(margin, title));
+
 		BoxLayout yAxisBox = new BoxLayout(newMsgPanel, BoxLayout.Y_AXIS);
 		newMsgPanel.setLayout(yAxisBox);
 		
 		//add elements: List all noncurrent users as available targets for message, can use currentRecipients.getSelectedItem() later for logic
 		updateRecipients();
 
+		//recipients
+		JPanel recipientWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER));
+		recipientWrapper.add(new JLabel("To: "));
+		recipientWrapper.add(currentRecipients);
+		newMsgPanel.add(recipientWrapper);
+
+		//priority buttons
+		JPanel buttonWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER));
+		buttonWrapper.add(createPrioButtons());
+		newMsgPanel.add(buttonWrapper);
+
 		//subject field
-		JPanel subject = new JPanel();
-		final int WIDTH = 10;
+		JPanel subjectWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER));
 		JLabel subjectLabel = new JLabel("Subject: ");
-		JTextField subjectField = new JTextField(WIDTH);
-		subject.add(subjectLabel);
-		subject.add(subjectField);
-		subjectField.setMaximumSize(new Dimension(Integer.MAX_VALUE, subjectField.getPreferredSize().height));
+		JTextField subjectField = new JTextField(20);
+		subjectWrapper.add(subjectLabel);
+		subjectWrapper.add(subjectField);
+		newMsgPanel.add(subjectWrapper);
 		
-		//text area for drafting email
-		final int ROWS = 15; // Lines of text
-		final int COLUMNS = 50; // Characters in each row
-		JTextArea messageDraft = new JTextArea(ROWS, COLUMNS);
+		//message area
+		JTextArea messageDraft = new JTextArea(15, 50);
 		JScrollPane messageScrollable = new JScrollPane(messageDraft);
-		messageDraft.setEditable(true);
+		newMsgPanel.add(messageScrollable);
 		
 		//submission buttons
-		JPanel controlButtonsPanel = new JPanel();
+		JPanel controlWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER));
 		JButton sendButton = new JButton("Send");
 		JButton clearButton = new JButton("Clear");
-		controlButtonsPanel.add(sendButton);
-		controlButtonsPanel.add(clearButton);
-		
-		//add all to panel -> homeFrame
-		newMsgPanel.add(currentRecipients);
-		newMsgPanel.add(createPrioButtons());	//add panel of buttons
-		newMsgPanel.add(subjectField);
-		newMsgPanel.add(messageScrollable);
-		newMsgPanel.add(controlButtonsPanel);
+		controlWrapper.add(sendButton);
+		controlWrapper.add(clearButton);
+		newMsgPanel.add(controlWrapper);
 		
 		//clearing fields logic
 		clearButton.addActionListener(e ->
@@ -230,27 +235,49 @@ public class EmailSystem {
 		sendButton.addActionListener(e ->
 		{
 			String recipientName = (String) currentRecipients.getSelectedItem();
-			Email currentEmail = new Email(currentUser.getName(), recipientName, determineSelectedRadio(), subjectField.getText(), messageDraft.getText());
+			String priority = determineSelectedRadio();
+			String subject = subjectField.getText();
+			String body = messageDraft.getText();
 
-			//find recipient based on name
-			User targetUser = null;
-			for (User u : users) {
-				if (u.getName().equals(recipientName)) {
-					targetUser = u;
-					break;
+			boolean isValid = recipientName != null &&
+					!priority.isEmpty() &&
+					!subject.isBlank() &&
+					!body.isBlank();
+
+			if(isValid)
+			{
+				Email currentEmail = new Email(
+						currentUser.getName(),
+						recipientName,
+						determineSelectedRadio(),
+						subjectField.getText(),
+						messageDraft.getText(),
+						LocalTime.now());
+
+				//find recipient based on name
+				User targetUser = null;
+				for (User u : users) {
+					if (u.getName().equals(recipientName)) {
+						targetUser = u;
+						break;
+					}
 				}
+
+				if(targetUser != null) targetUser.addEmail(currentEmail);
+
+				//clear relevant fields
+				messageDraft.setText("");
+				subjectField.setText("");
+				
+				//show informational dialogue of confirmation
+				JOptionPane.showMessageDialog(homeFrame, "Email sent successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
 			}
-
-			if(targetUser != null) targetUser.addEmail(currentEmail);
-
-			//clear relevant fields
-			messageDraft.setText("");
-			subjectField.setText("");
+			else 
+				JOptionPane.showMessageDialog(homeFrame, "One or more fields empty!", "Failure", JOptionPane.INFORMATION_MESSAGE);
 			
-			//show informational dialogue of confirmation
-			JOptionPane.showMessageDialog(homeFrame, "Email sent!", "Success",JOptionPane.INFORMATION_MESSAGE);
 		});
 		
+		// publish changes to main
 		main.add(newMsgPanel);
 	}
 
@@ -289,10 +316,8 @@ public class EmailSystem {
 
 	public static String determineSelectedRadio()
 	{
-		String priority = "";
-		if (priorityGroup.getSelection().getActionCommand() != null) {
-			priority = priorityGroup.getSelection().getActionCommand();
-		}
-		return priority;
+		ButtonModel selectedModel = priorityGroup.getSelection();
+		if (selectedModel != null) return selectedModel.getActionCommand();
+		return "";
 	}
 }
