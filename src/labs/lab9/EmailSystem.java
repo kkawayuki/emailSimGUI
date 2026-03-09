@@ -5,7 +5,9 @@ import javax.swing.border.*;
 import java.awt.*;
 import java.util.HashSet;
 import java.util.Set;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 
 public class EmailSystem {
 	//fields that need to change during runtime cannot be local
@@ -172,7 +174,9 @@ public class EmailSystem {
 	public static void refreshInbox()
 	{
 		inboxModel.clear();
-		for (Email e : currentUser.emails)
+
+		//invoke a sort on the arraylist via Collections.sort in Email class
+		for (Email e : currentUser.sortEmails())
 			inboxModel.addElement(e);
 	}
 	
@@ -252,7 +256,7 @@ public class EmailSystem {
 						determineSelectedRadio(),
 						subjectField.getText(),
 						messageDraft.getText(),
-						LocalTime.now());
+						LocalDateTime.now());
 
 				//find recipient based on name
 				User targetUser = null;

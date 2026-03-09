@@ -1,5 +1,6 @@
 package labs.lab9;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Objects;
 
 public class User
@@ -20,6 +21,12 @@ public class User
     public void addEmail(Email e)
     {
         emails.add(e);
+    }
+
+    public ArrayList<Email> sortEmails()
+    {
+        Collections.sort(emails);   //provide custom behavior for sort via email @override of compareTo method
+        return this.emails;
     }
 
 	// for using Users in a list, we need to ensure that uniqueness can be verified
