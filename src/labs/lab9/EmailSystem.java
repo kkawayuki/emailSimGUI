@@ -6,8 +6,6 @@ import java.awt.*;
 import java.util.HashSet;
 import java.util.Set;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.ArrayList;
 
 public class EmailSystem {
 	//fields that need to change during runtime cannot be local
@@ -66,6 +64,7 @@ public class EmailSystem {
 	public static void createMain() {
 		JPanel mainContent = new JPanel();
 		mainContent.setLayout(new BoxLayout(mainContent, BoxLayout.Y_AXIS));
+		mainContent.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 20));
 		previewEmail.setEditable(false);
 
 		createInboxPanel(mainContent);
@@ -149,8 +148,9 @@ public class EmailSystem {
 	public static void createInboxPanel(JPanel main)
 	{
 		JPanel inboxPanel = new JPanel(new GridLayout(1, 2, 10, 0));	//horizontal, vertical gap
-		inboxPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 0, 20)); // add margins
-		inboxPanel.setBorder(new TitledBorder(new EtchedBorder(),"Inbox"));
+		Border margin = BorderFactory.createEmptyBorder(10, 10, 10, 10);
+		Border title = new TitledBorder(new EtchedBorder(), "Inbox");
+		inboxPanel.setBorder(new CompoundBorder(margin, title));
 
 		//inbox operations
 		refreshInbox();
@@ -203,6 +203,7 @@ public class EmailSystem {
 
 		//priority buttons
 		JPanel buttonWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER));
+		buttonWrapper.add(new JLabel("Priority: "));
 		buttonWrapper.add(createPrioButtons());
 		newMsgPanel.add(buttonWrapper);
 
@@ -253,7 +254,7 @@ public class EmailSystem {
 				Email currentEmail = new Email(
 						currentUser.getName(),
 						recipientName,
-						determineSelectedRadio(),
+						priority,
 						subjectField.getText(),
 						messageDraft.getText(),
 						LocalDateTime.now());
