@@ -107,6 +107,7 @@ public class EmailSystem {
 		currentUserPanel.add(currentUserDisplay);
 		currentUserPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));	//add margins 
 		homeFrame.add(currentUserPanel, BorderLayout.NORTH);
+		homeFrame.setTitle("Email System - " + currentUser.getName() + " " + String.format("1%05d", currentUser.getID() % 100_000));
 	}
 	
 	public static void createFileMenu(JMenuBar menu)

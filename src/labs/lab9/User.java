@@ -6,16 +6,23 @@ import java.util.Objects;
 public class User
 {
 	String name;
+    int ID;
 	ArrayList<Email>emails = new ArrayList<>();
 	
 	public User(String name)
 	{
 		this.name = name;
+        this.ID = hashCode();
 	}
 
     public String getName()
     {
         return this.name; 
+    }
+
+    public int getID()
+    {
+        return this.ID;
     }
 
     public void addEmail(Email e)
